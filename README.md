@@ -1,21 +1,54 @@
-## Database backup script (Bash)
-Taking database backup every day is a tedious job. Folks can use the above script to automate the process.
+# Database backup script (Bash)
 
-### Getting Started
-These instructions will get you a copy of the project up and running on your server.
-The scripting allows for an automatic commands execution that would otherwise be executed interactively one-by-one.
+A small script to automate MySQL dumps, compress them, and rotate old backups.
 
-### Installing
-1. Give permission 
-`$ chmod +x backup.sh`
-2. Set cron job for the backup
+## Features
+- `mysqldump` with sensible options for InnoDB
+- gzip compression and checksum
+- retention-based rotation
+- optional Git push (not recommended for large dumps)
+
+## Installation
+1. Make the script executable:
+```bash
+chmod +x /path/backup.sh
 ```
-$crontab -e
-0 1 * * * /home/backup.sh
+
+2. Edit configuration variables at the top of `backup.sh` (backup dir, DB name, retention, git enable).
+
+3. Create `~/.my.cnf` for credentials (recommended) and restrict permissions:
+
+```ini
+[client]
+user=backup_user
+password=your_password
 ```
 
-### Authors
-* Fuzail Ahmed
+```bash
+chmod 600 ~/.my.cnf
+```
 
-### License
-This project is licensed under the GNU General Public License - see the LICENSE.md file for details
+4. Test manually:
+
+```bash
+/path/backup.sh
+tail -n 50 /path/database_logs/backuplogs.log
+```
+
+5. Add cron job (use absolute path):
+
+```cron
+0 1 * * * /path/backup.sh >> /path/database_logs/cron_wrapper.log 2>&1
+```
+
+## Security note
+
+Avoid committing raw database dumps into Git — prefer object storage (S3/GCS) or an artifact repository. Use a secrets manager to store DB credentials for production.
+
+## Author
+
+Fuzail Ahmed
+
+## License
+
+GNU General Public License - see LICENSE.md
